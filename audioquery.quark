@@ -1,0 +1,8 @@
+(
+  \author: "James Annett",
+  \name: "Audio Query",
+  \schelp: "Audio Query",
+  \since: "2021",
+  \summary: "Class implementation of Ted Moore's FluComa audio query example from https://discourse.flucoma.org/t/audio-query-in-supercollider-demo/1149",
+  \version: "1.0.0"
+)
