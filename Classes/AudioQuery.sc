@@ -2,16 +2,17 @@
 AudioQuery {
   var s, path, nmfccs,
   // Source
-  <>source_buf,<>source_indices_buf,<>source_dataset,
+  <>source_buf,<>source_indices_buf,
   // Callback functions
   analyze_to_dataset,play_source_index,
   // Datasets
-  <>scaled_dataset,<>scaler,
+  <>scaled_dataset,<>scaler,<>source_dataset,<>target_dataset,
   // Kdtree
   <>kdtree,
   // Target
-  <>target_path,<>target_buf,<>target_indices_buf,<>target_dataset,
-  <>query,<>test;
+  <>target_path,<>target_buf,<>target_indices_buf,
+  <>query,<>test,
+  <>synth;
 
   *new { |s,path|
     ^super.newCopyArgs(s ? Server.default, path ? "/Users/james/Local/Samples/mykit/dr110/").init
@@ -50,6 +51,9 @@ AudioQuery {
             FluidBufStats.process(s,features_buf,stats:stats_buf).wait;
             FluidBufFlatten.process(s,stats_buf,numFrames:1,destination:flat_buf).wait;
             dataset.addPoint("slice-%".format(slice_index),flat_buf);
+            // TODO: HERE -->>
+            // playdataset.addPoint
+            // setn(startframe, numframes)
           };
         });
         action.value(dataset);
@@ -75,12 +79,17 @@ AudioQuery {
   loadSourceFilesSync { |source_files_folder|
     var loader;
     "loadSourceFilesSync".postln;
-    // loader = FluidLoadFolder(source_files_folder, channelFunc); s.sync;
-    loader = FluidLoadFolder(source_files_folder); s.sync;
+    loader = FluidLoadFolder(source_files_folder, channelFunc: {
+      // arg currentFile, channelCount, currentIndex;
+      // [currentFile, channelCount, currentIndex].postln;
+      // if mono:
+      //  [0,0]
+      // if stereo:
+      //  [0,1]
+      // buffer.readChannel(f.path,bufStartFrame:startEnd[i][0], channels:channelMap);
+    }); s.sync;
     loader.play(s,{
       source_buf = loader.buffer;
-      // SoundFile.use
-      // if stereo, load each channel, copy to mono buf, use only for analysis
       "all files loaded".postln;
       "num channels: %".format(source_buf.numChannels).postln
     }); s.sync;
@@ -181,18 +190,24 @@ AudioQuery {
     }.play;
   }
 
-  querySounds {
-    // kdtree.kr inside of Synth
-    // kdtree.kr(trigger, buffer (find nearest neighbour), writeBuf);
-    //   what file is that in, where does it start, how long?
-    // lookup dataset (read from buffer onto server to playback)
+  querySynth {
+    synth = {
+      var trig = Impulse.kr(4); // paramaterize or use onset detector
+      var point = 2.collect{TRand.kr(0,1,trig)};
+      point.collect{|p,i| BufWr.kr([p],source_buf)};
+      // kdtree.kr(trig,source_buf,target_buf,5,nil);
+      // mfccs = FluidMFCC.kr(SoundIn.ar(0)):
+      // FluidKrToBuf.kr(mfccs, target_buf);
+      // params must match
+      kdtree.kr(trig,target_buf,5,nil);
+      // Poll.kr(trig, BufRd.kr(1,target_buf,Array.iota(10)),10.collect{|i| "Neighbour" + (i/2).asInteger ++ "-" ++ (i.mod(2))});
+      // sig = PlayBuf.ar(index, buf, trig);
+      sig = PlayBuf.ar(, source_buf, trig);
+      // Out.ar(out, sig);
+    }.play;
+  }
 
-    // 11. QUERY THE DRUM SOUNDS TO FIND "REPLACEMENTS"
-    // play back the drum slices with a .wait in between so we hear the drum loop
-    // is is very similar to step 8 above, but now instead of playing the slice of
-    // the drum loop, it get's the analysis of the drum loop's slice into "query_buf",
-    // then uses that info to lookup the nearest neighbour in the source dataset and
-    // play that slice
+  querySounds {
     query = Routine{
       var query_buf = Buffer.alloc(s,nmfccs); // a buffer for doing the neighbor lookup with
       var scaled_buf = Buffer.alloc(s,nmfccs);
@@ -244,14 +259,6 @@ AudioQuery {
               });
             });
           });
-
-          // if you want to hear the drum set along side the neighbor slices, uncomment this function
-          /*{
-          var sig = PlayBuf.ar(1,target_buf,BufRateScale.ir(target_buf),0,start_frame,0,2);
-          var env = EnvGen.kr(Env([0,1,1,0],[0.03,dur_secs-0.06,0.03]),doneAction:2);
-          // sig = sig * env; // include this env if you like, but keep the line above because it will free the synth after the slice!
-          sig.dup;
-          }.play;*/
 
           dur_secs.wait;
         };
