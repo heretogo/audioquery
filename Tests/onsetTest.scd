@@ -7,6 +7,9 @@
 ~query.kdtree.kr
 
 kdtree.kr(trig,target_buf,5,dataset);
+<>scaled_dataset,<>scaler,<>source_dataset,<>target_dataset,
+
+FluidDataSet
 
 ~query.testDrumLoop;
 ~query.test.stop;
