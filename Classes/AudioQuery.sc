@@ -118,12 +118,12 @@ AudioQuery {
   }
 
   querySynth {
-    synth = { |gate=1,query_interval=7,out=0,ampThreshold=(-70.dbamp)|
-      var env, localbuf, mfccs, playback, playbackbuf, trig,
-          start_frame, num_frames, sig, t_kdtree,
+    synth = { |gate=1, query_interval=7, out=0, ampThreshold=(-70.dbamp)|
+      var env, gatenv, localbuf, mfccs, playback, playbackbuf, trig,
+          start_frame, num_frames, sig, t_kdtree, dur_secs,
           inenv, input, amp, isPlaying;
-      env = EnvGen.kr(Env.asr, gate, doneAction: 0);
-      t_kdtree = Impulse.kr(query_interval) * env; // send query interval
+      gatenv = EnvGen.kr(Env.asr, gate, doneAction: 0);
+      t_kdtree = Impulse.kr(query_interval) * gatenv; // send query interval
       localbuf = LocalBuf(nmfccs, 1);
       playbackbuf = LocalBuf(2, 1);
       playback = PlayBuf.ar(1,test_sound,loop:1);
@@ -137,6 +137,8 @@ AudioQuery {
       FluidKrToBuf.kr(mfccs, localbuf);
       kdtree.kr(trig,localbuf,playbackbuf,1,playback_dataset);
       #start_frame, num_frames = FluidBufToKr.kr(playbackbuf);
+      dur_secs = num_frames / SampleRate.ir(playbackbuf);
+      env = EnvGen.kr(Env.perc(0.01, dur_secs, 1, -4), trig, doneAction: 0);
       sig = PlayBuf.ar(2, bufnum: corpus_buf, trigger: trig, startPos: start_frame) * env;
       Out.ar(out, sig!2);
     }.play;
