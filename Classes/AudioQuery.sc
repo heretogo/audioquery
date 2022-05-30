@@ -3,19 +3,18 @@ AudioQuery {
   // Corpus
   <>corpus_buf,<>corpus_indices_buf,
   // Callback functions
-  analyze_to_dataset,play_corpus_index,
+  analyze_to_dataset,
+
   // Datasets
-  <>scaled_dataset,<>scaler,<>corpus_dataset,<>query_dataset,
-  <>playback_dataset,
+  <>scaled_dataset,<>scaler,
+  <>corpus_dataset,<>playback_dataset,
   // Kdtree
   <>kdtree,
-  // Query
-  <>query_path,<>query_buf,<>query_indices_buf,
-  <>query,<>test,<>test_sound,
-  <>synth;
+  // Synth
+  <>test_sound,<>synth;
 
   *new { |s,path|
-    ^super.newCopyArgs(s ? Server.default, path ? "/Users/james/Local/Samples/mykit/dr110/").init
+    ^super.newCopyArgs(s ? Server.default, path).init
   }
 
   init {
@@ -47,7 +46,6 @@ AudioQuery {
           slices_array.doAdjacentPairs{
             arg start_frame, end_frame, slice_index;
             var num_frames = end_frame - start_frame;
-
             "analyzing slice: % / %".format(slice_index + 1,slices_array.size - 1).postln;
             FluidBufMFCC.process(s,audio_buffer,start_frame,num_frames,features:features_buf,startCoeff:1,numCoeffs:nmfccs).wait;
             FluidBufStats.process(s,features_buf,stats:stats_buf).wait;
@@ -68,9 +66,10 @@ AudioQuery {
     "loadCorpusFilesSync".postln;
     loader = FluidLoadFolder(corpus_files_folder, channelFunc: {
       arg currentFile, channelCount, currentIndex;
+      // TODO:
       // channelCount.postln;
-      // if(channelCount == 1, {[0,0]});
-      // if(channelCount == 2, {[0,1]});
+      // if(channelCount == 1, {^[0,0]});
+      // if(channelCount == 2, {^[0,1]});
       // An Array of channels to be read from the soundfile. Indices start from zero. These will be read in the order provided.
     }); s.sync;
     loader.play(s,{
@@ -105,15 +104,6 @@ AudioQuery {
     });
   }
 
-  analyzeQueryBuffer {
-    "analyzeQueryBuffer".postln;
-    analyze_to_dataset.(query_buf,query_indices_buf,{
-      arg ds;
-      query_dataset = ds;
-      query_dataset.print;
-    });
-  }
-
   fitToKDTree {
     Routine{
       kdtree = FluidKDTree(s);
@@ -128,15 +118,22 @@ AudioQuery {
   }
 
   querySynth {
-    synth = { |gate=1,query_interval=7,out=0|
-      var env, localbuf, mfccs, playbackbuf, trig,
-          start_frame, num_frames, sig;
+    synth = { |gate=1,query_interval=7,out=0,ampThreshold=(-70.dbamp)|
+      var env, localbuf, mfccs, playback, playbackbuf, trig,
+          start_frame, num_frames, sig, t_kdtree,
+          inenv, input, amp, isPlaying;
       env = EnvGen.kr(Env.asr, gate, doneAction: 0);
-      trig = Impulse.kr(query_interval) * env; // send query interval
+      t_kdtree = Impulse.kr(query_interval) * env; // send query interval
       localbuf = LocalBuf(nmfccs, 1);
       playbackbuf = LocalBuf(2, 1);
-      mfccs = FluidMFCC.kr(PlayBuf.ar(1,test_sound,loop:1),startCoeff:1,numCoeffs:nmfccs);
-      // mfccs = FluidMFCC.kr(SoundIn.ar(0),startCoeff:1,numCoeffs:nmfccs);
+      playback = PlayBuf.ar(1,test_sound,loop:1);
+      // mfccs = FluidMFCC.kr(playback, startCoeff:1,numCoeffs:nmfccs);
+      input = SoundIn.ar(0);
+      amp = Amplitude.kr(input);
+      isPlaying = (amp>ampThreshold);
+      inenv = EnvGen.ar(Env.asr(0.01,1,1), gate: isPlaying);
+      trig = FluidOnsetSlice.ar(input);
+      mfccs = FluidMFCC.kr(input * inenv,startCoeff:1,numCoeffs:nmfccs);
       FluidKrToBuf.kr(mfccs, localbuf);
       kdtree.kr(trig,localbuf,playbackbuf,1,playback_dataset);
       #start_frame, num_frames = FluidBufToKr.kr(playbackbuf);
