@@ -39,8 +39,9 @@ AudioQueryMFCC : AudioQuery {
       var env, gatenv, localbuf, mfccs, playback, playbackbuf, trig,
       start_frame, num_frames, sig, t_kdtree, dur_secs,
       inenv, input, amp, isPlaying;
+
       gatenv = EnvGen.kr(Env.asr, gate, doneAction: 0);
-      t_kdtree = Impulse.kr(query_interval) * gatenv; // send query interval
+      t_kdtree = Impulse.kr(query_interval) * gatenv;
       localbuf = LocalBuf(nmfccs, 1);
       playbackbuf = LocalBuf(2, 1);
       input = SoundIn.ar(0);
@@ -52,7 +53,7 @@ AudioQueryMFCC : AudioQuery {
       FluidKrToBuf.kr(mfccs, localbuf);
       kdtree.kr(t_kdtree,localbuf,playbackbuf,1,playback_dataset);
       #start_frame, num_frames = FluidBufToKr.kr(playbackbuf);
-      dur_secs = num_frames / SampleRate.ir(playbackbuf); // make configurable
+      dur_secs = num_frames / SampleRate.ir(playbackbuf);
       env = EnvGen.kr(Env.perc(0.01, dur_secs, 1, -4), trig, doneAction: 0);
       sig = PlayBuf.ar(1, bufnum: corpus_buf, trigger: trig, startPos: start_frame) * env;
       Out.ar(out, sig!2);

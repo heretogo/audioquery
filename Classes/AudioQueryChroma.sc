@@ -5,7 +5,6 @@ AudioQueryChroma : AudioQuery {
   setup {
     "%: Initializing Class".format(this.class).postln;
     corpus_indices_buf = Buffer(s); s.sync;
-    test_sound = Buffer.read(s, "/Users/james/Library/Application Support/SuperCollider/Extensions/FluidCorpusManipulation/Resources/AudioFiles/Nicol-LoopE-M.wav"); s.sync;
     analyze_to_dataset = {
       arg audio_buffer, slices_buffer, action;
       Routine{
@@ -56,10 +55,10 @@ AudioQueryChroma : AudioQuery {
       kdtree.kr(t_kdtree,localbuf,playbackbuf,1,playback_dataset);
       #start_frame, num_frames = FluidBufToKr.kr(playbackbuf);
       [start_frame, num_frames].postln;
-      // dur_secs = num_frames / SampleRate.ir(playbackbuf);
-      // env = EnvGen.kr(Env.perc(0.01, dur_secs, 1, -4), trig, doneAction: 0);
-      // sig = PlayBuf.ar(1, bufnum: corpus_buf, trigger: trig, startPos: start_frame) * env;
-      // Out.ar(out, sig!2);
+      dur_secs = num_frames / SampleRate.ir(playbackbuf);
+      env = EnvGen.kr(Env.perc(0.01, dur_secs, 1, -4), trig, doneAction: 0);
+      sig = PlayBuf.ar(1, bufnum: corpus_buf, trigger: trig, startPos: start_frame) * env;
+      Out.ar(out, sig!2);
     }.play;
   }
 }
