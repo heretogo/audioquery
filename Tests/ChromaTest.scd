@@ -9,5 +9,10 @@
 ~chroma.synth.free;
 ~chroma.corpus_buf.play
 
+~chroma.corpus_dataset.print
+~chroma.playback_dataset.print
+
 // FluidBufChroma
 // FluidChroma
+
+FluidBufOnsetSlice

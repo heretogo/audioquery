@@ -9,7 +9,7 @@ AudioQuery {
   // Kdtree
   <>kdtree,<>scaled_dataset,<>scaler,
   // Synth
-  <>test_sound,<>synth;
+  <>synth;
 
   *new { |s,path|
     ^super.newCopyArgs(s ? Server.default, path).init
@@ -70,6 +70,20 @@ AudioQuery {
       this.fitToKDTree;
     });
   }
+
+  // loadSavedAnalysis {
+  //   corpus_buf.read,
+  //   corpus_indices_buf.read,
+  //   corpus_dataset.read
+  //   this.fitToKDTree;
+  // }
+
+  // saveAnalysis {
+  //   corpus_indices_buf,
+  //      .write(path, headerFormat: "aiff", sampleFormat: "int24", numFrames: -1, startFrame: 0, leaveOpen: false, completionMessage)
+  //   corpus_dataset
+  //      .write
+  // }
 
   fitToKDTree {
     Routine{

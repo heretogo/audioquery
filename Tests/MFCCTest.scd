@@ -5,6 +5,7 @@
 ~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/trek/all/");
 
 ~input = { SoundIn.ar(0) }.play;
+~input.free;
 ~query.kdtree;
 ~query.querySynth;
 ~query.synth.free;
@@ -12,5 +13,7 @@
 ~query.synth.set(\query_interval,200);
 ~query.synth.set(\ampThreshold,-70.dbamp);
 ~query.corpus_buf.play;
+
+~query.playback_dataset.print
 
 FluidLoadFolder

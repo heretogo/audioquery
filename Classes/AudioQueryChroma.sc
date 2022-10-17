@@ -37,8 +37,8 @@ AudioQueryChroma : AudioQuery {
 
   querySynth {
     synth = { |gate=1, query_interval=7, out=0, ampThreshold=(-70.dbamp)|
-      var env, gatenv, localbuf, mfccs, playback, playbackbuf, trig,
-      start_frame, num_frames, sig, t_kdtree, dur_secs, chroma,
+      var env, gatenv, localbuf, chroma, playback, playbackbuf, trig,
+      start_frame, num_frames, sig, t_kdtree, dur_secs,
       inenv, input, amp, isPlaying;
 
       gatenv = EnvGen.kr(Env.asr, gate, doneAction: 0);
@@ -50,7 +50,7 @@ AudioQueryChroma : AudioQuery {
       isPlaying = (amp>ampThreshold);
       inenv = EnvGen.ar(Env.asr(0.01,1,1), gate: isPlaying);
       trig = FluidOnsetSlice.ar(input);
-      chroma = FluidChroma.kr(input * inenv, numChroma: nchroma);
+      chroma = FluidChroma.kr(input * inenv, numChroma: nchroma).poll;
       FluidKrToBuf.kr(chroma, localbuf);
       kdtree.kr(t_kdtree,localbuf,playbackbuf,1,playback_dataset);
       #start_frame, num_frames = FluidBufToKr.kr(playbackbuf);
