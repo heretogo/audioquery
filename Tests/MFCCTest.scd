@@ -1,15 +1,19 @@
-~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/mykit/mono/");
-~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/mykit/bongo/");
-~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/mykit/timpani/");
-~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/tabla/");
-~query = AudioQueryMFCC(s,"/Users/james/Local/Samples/trek/all/");
+~flucoma[\audioQueryDR110] = AudioQueryMFCC(s,"/Users/james/Local/Sources/Audio/Samples/mykit/mono/");
+~flucoma[\audioQueryTrek].querySynth;
+
+~flucoma[\audioQueryTrek] = AudioQueryMFCC(s,"/Users/james/Local/Sources/Audio/Samples/trek/all/");
+~flucoma[\audioQueryTrek].querySynth;
+
+~flucoma[\audioQueryBongo] = AudioQueryMFCC(s,"/Users/james/Local/Sources/Audio/Samples/mykit/bongo/");
+~flucoma[\audioQueryTimpani] = AudioQueryMFCC(s,"/Users/james/Local/Sources/Audio/Samples/mykit/timpani/");
+~flucoma[\audioQueryTabla] = AudioQueryMFCC(s,"/Users/james/Local/Sources/Audio/Samples/tabla/");
 
 ~input = { SoundIn.ar(0) }.play;
 ~input.free;
 ~query.kdtree;
 ~query.querySynth;
 ~query.synth.free;
-~query.synth.set(\gate, 0);
+~query.synth.set(\gate, 1);
 ~query.synth.set(\query_interval,200);
 ~query.synth.set(\ampThreshold,-70.dbamp);
 ~query.corpus_buf.play;
